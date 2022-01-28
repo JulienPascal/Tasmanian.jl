@@ -1,4 +1,9 @@
-    function run()
+using Tasmanian
+using Random
+using Plots
+using Interpolations
+
+	function run()
         iDim = 2
         iOut = 1
         iDepth = 5
@@ -20,7 +25,7 @@
         Tasmanian.makeLocalPolynomialGrid!(tsg,iOrder=which_basis,sRule="localp")
 
         # sparse grid points from that object
-        spPoints = getPoints(tsg)
+        spPoints = Tasmanian.getPoints(tsg)
 
         # measure perf at N randomly chosen points
         tfun(x,y) = cos(0.5 * pi * x) * cos(0.5 * pi * y)
@@ -35,38 +40,39 @@
         spVals = [tfun(spPoints[i,1],spPoints[i,2]) for i in 1:size(spPoints,1)]
 
         # load points needed for such values
-        loadNeededPoints!(tsg,spVals)
+        Tasmanian.loadNeededPoints!(tsg,spVals)
 
         # evaluate interpolation
-        res = evaluateBatch(tsg,randPnts)
+        res = Tasmanian.evaluateBatch(tsg,randPnts)
 
         # Plots
         p1=scatter(randPnts[:,1],randPnts[:,2],m=(:black,2),title="test points")
         p2=scatter(spPoints[:,1],spPoints[:,2],m=(:red,2),title="sparse grid")
         pts=plot(p1,p2,legend=false)
 
-        p4 = surface(randPnts[:,1],randPnts[:,2],truth.-res,title="error")
-        p3 = surface(randPnts[:,1],randPnts[:,2],res,title="prediction")
+		#
+        p4 = plot(randPnts[:,1], randPnts[:,2], truth[:].-res[:], title="error", seriestype=:scatter3d)
+        p3 = plot(randPnts[:,1],randPnts[:,2],res[:],title="prediction", seriestype=:scatter3d)
         p = plot(p1,p2,p3,p4,layout=(2,2),legend=false)
 
-        # # compute error 
+        # # compute error
         return p
     end
 
     function ex2(;save=false)
-        dim =  2       
-        outs = 1       
+        dim =  2
+        outs = 1
         iDepth = 2
-        tol = 1e-5    
+        tol = 1e-5
         K = 7  # max refinement steps
         tsg = Tasmanian.TasmanianSG(dim,outs,iDepth)
         which_basis = 1 #1= linear basis functions -> Check the manual for other options
         Tasmanian.makeLocalPolynomialGrid!(tsg,iOrder=which_basis,sRule="localp")
 
         # sparse grid points from that object
-        spPoints = getPoints(tsg)
+        spPoints = Tasmanian.getPoints(tsg)
 
-        # test fun 
+        # test fun
         tfun(x,y) = exp(-x^2) * cos(y)
 
         Random.seed!(2)
@@ -78,10 +84,10 @@
         # values on sparse grid
         spVals = [tfun(spPoints[i,1],spPoints[i,2]) for i in 1:size(spPoints,1)]
         # load points needed for such values
-        loadNeededPoints!(tsg,spVals)
+        Tasmanian.loadNeededPoints!(tsg,spVals)
 
         # evaluate interpolation
-        res = evaluateBatch(tsg,randPnts)
+        res = Tasmanian.evaluateBatch(tsg,randPnts)
 
         numpoints = size(spPoints,1)
 
@@ -89,15 +95,15 @@
 
         # refinefment loop
         anim = @animate for k in 1:K
-            setSurplusRefinement!(tsg,tol,sCriteria="classic")
-            spPoints = getNeededPoints(tsg)   # additional set of points required after refinement
+            Tasmanian.setSurplusRefinement!(tsg,tol,sCriteria="classic")
+            spPoints = Tasmanian.getNeededPoints(tsg)   # additional set of points required after refinement
             spVals = [tfun(spPoints[i,1],spPoints[i,2]) for i in 1:size(spPoints,1)]
             # load points needed for such values
-            loadNeededPoints!(tsg,spVals)
+            Tasmanian.loadNeededPoints!(tsg,spVals)
             numpoints =+ size(spPoints,1)
 
             # evaluate interpolation
-            res = evaluateBatch(tsg,randPnts)
+            res = Tasmanian.evaluateBatch(tsg,randPnts)
 	        pred = Tasmanian.evaluateBatch(tsg,Array(spPoints))  # prediction on spGrid
             @info("refinement level $k error: $(round(maximum(abs,res .- truth),digits = 5)), with $numpoints points")
 
@@ -109,7 +115,7 @@
         		 layout=(1,3),leg=false
         		 )
         end
-        if save 
+        if save
             gif(anim,joinpath(dirname(@__FILE__),"ex2.gif"),fps=1)
         end
         return gif(anim,fps = 1)
@@ -118,10 +124,10 @@
 
     function ex3(;save=false)
     	tfun(x,y) = 1.0 / (abs(0.5 - x^4 - y^4) + 0.1)
-        dim =  2       
-        outs = 1       
+        dim =  2
+        outs = 1
         iDepth = 2
-        tol = 1e-5    
+        tol = 1e-5
         K = 9  # max refinement steps
         tsg = Tasmanian.TasmanianSG(dim,outs,iDepth)
 

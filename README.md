@@ -1,4 +1,4 @@
-# Tasmanian.jl 
+# Tasmanian.jl
 
 [![Build Status](https://travis-ci.org/floswald/Tasmanian.jl.svg?branch=master)](https://travis-ci.org/floswald/Tasmanian.jl)
 
@@ -56,9 +56,9 @@ This approximates `f(x,y) = 1.0 / (abs(0.5 - x^4 - y^4) + 0.1)`.
 To install julia package
 
 ```julia
-Pkg.clone("git@github.com:floswald/Tasmanian.jl.git")
+using Pkg
+Pkg.add(url="git@github.com:floswald/Tasmanian.jl.git")
 Pkg.build("Tasmanian")
 ```
 
 The Tasmanian library will be downloaded as a precompiled binary version fitting to your system.
-
